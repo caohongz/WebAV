@@ -169,6 +169,11 @@ export class AVCanvas {
   }
 
   #renderTime = 0e6;
+
+  get renderTime() {
+    return this.#renderTime;
+  }
+
   #updateRenderTime(time: number) {
     this.#renderTime = time;
     this.#spriteManager.updateRenderTime(time);
