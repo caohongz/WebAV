@@ -8,7 +8,10 @@ export function renderCtrls(
   cvsEl: HTMLCanvasElement,
   sprMng: SpriteManager,
   rectCtrlsGetter: (rect: Rect) => RectCtrls,
-): () => void {
+): {
+  destroy: () => void;
+  refresh: () => void;
+} {
   const cvsRatio = {
     w: cvsEl.clientWidth / cvsEl.width,
     h: cvsEl.clientHeight / cvsEl.height,
@@ -64,13 +67,30 @@ export function renderCtrls(
   window.addEventListener('pointerup', onWinowUp);
   window.addEventListener('pointermove', onMove);
 
-  return () => {
+  // 新增的刷新函数，可以在外部修改rect后手动调用
+  const refresh = (): void => {
+    if (sprMng.activeSprite == null) return;
+    syncCtrlElPos(
+      sprMng.activeSprite,
+      rectEl,
+      ctrlsEl,
+      cvsRatio,
+      rectCtrlsGetter,
+    );
+  };
+
+  const destroy = (): void => {
     observer.disconnect();
     offSprChange();
     rectEl.remove();
     cvsEl.removeEventListener('pointerdown', onDown);
     window.removeEventListener('pointerup', onWinowUp);
     window.removeEventListener('pointermove', onMove);
+  };
+
+  return {
+    destroy,
+    refresh,
   };
 }
 

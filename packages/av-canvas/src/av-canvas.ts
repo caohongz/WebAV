@@ -77,6 +77,8 @@ export class AVCanvas {
   #clears: Array<() => void> = [];
   #stopRender: () => void;
 
+  #ctrlsRefresh: (() => void) | null = null;
+
   #evtTool = new EventTool<{
     timeupdate: (time: number) => void;
     paused: () => void;
@@ -131,7 +133,17 @@ export class AVCanvas {
         container,
         rectCtrlsGetter,
       ),
-      renderCtrls(container, this.#cvsEl, this.#spriteManager, rectCtrlsGetter),
+    );
+    // 保存renderCtrls返回的对象，以便后续使用refresh方法
+    const ctrlsResult = renderCtrls(
+      container,
+      this.#cvsEl,
+      this.#spriteManager,
+      rectCtrlsGetter,
+    );
+    this.#ctrlsRefresh = ctrlsResult.refresh;
+    this.#clears.push(ctrlsResult.destroy);
+    this.#clears.push(
       this.#spriteManager.on(ESpriteManagerEvt.AddSprite, (s) => {
         const { rect } = s;
         // 默认居中
@@ -353,6 +365,16 @@ export class AVCanvas {
     this.#sprMapAudioNode.get(vs)?.disconnect();
     this.#spriteManager.removeSprite(vs);
   };
+
+  /**
+   * 刷新控制点
+   * 当在外部修改sprite的rect值后，可以调用此方法强制更新控制点位置
+   */
+  refreshControls(): void {
+    if (this.#ctrlsRefresh) {
+      this.#ctrlsRefresh();
+    }
+  }
 
   /**
    * 销毁实例
